@@ -1,0 +1,15 @@
+# portable runtime, downloaded models, user results - never commit
+python/
+.venv/
+models/
+projects/
+dist/
+*.wav
+*.mp3
+*.flac
+*.log
+python.tar.gz
+__pycache__/
+*.pyc
+*.peaks.json
+.ipynb_checkpoints/

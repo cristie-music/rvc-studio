@@ -1,0 +1,22 @@
+# RVC Studio - Python packages (Python 3.11). PyTorch is installed separately by install.bat / install.sh /
+# the Colab notebook, with the build that matches the machine (NVIDIA CUDA / AMD ROCm / Intel XPU / Apple MPS / CPU).
+# qwen-tts is installed with --no-deps: its gradio/torchaudio/sox dependencies are not needed
+# (they serve only the old 25 Hz tokenizer; torchaudio is no longer released for current PyTorch).
+numpy==1.26.4
+scipy==1.17.1
+soundfile==0.14.0
+librosa==0.11.0
+soxr==1.1.0
+pyloudnorm==0.1.1
+PyYAML==6.0.3
+pyworld==0.3.5
+onnxruntime==1.31.0
+# TTS (Qwen3-TTS) + stress marks + speech recognition
+transformers==4.57.3
+accelerate==1.12.0
+einops==0.8.2
+ruaccent==1.5.8.3
+faster-whisper==1.2.1
+num2words>=0.5.6
+hf_xet
+setuptools<81

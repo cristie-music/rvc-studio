@@ -1,0 +1,34 @@
+RVC Studio uses the following third-party models and code. Weights are downloaded from their original locations
+at install time / first use and are NOT redistributed with RVC Studio.
+
+NEURAL NETWORKS
+---------------
+Mel-Band RoFormer Vocals — becruily — huggingface.co/becruily/mel-band-roformer-vocals
+Mel-Band RoFormer Karaoke — becruily — huggingface.co/becruily/mel-band-roformer-karaoke
+Dereverb-Echo Mel-Band RoFormer v2 — Sucial — huggingface.co/Sucial/Dereverb-Echo_Mel_Band_Roformer
+    License: CC BY-NC-SA 4.0 (non-commercial).
+De-Reverb Mel-Band RoFormer — anvuew — huggingface.co/anvuew/dereverb_mel_band_roformer — License: GPL-3.0.
+Qwen3-TTS 12Hz 1.7B Base, Russian stress fine-tune "ru-stress-cf" — siriusfreak (on top of Qwen/Qwen3-TTS-12Hz-1.7B-Base)
+    huggingface.co/siriusfreak/qwen3-tts-12hz-1.7b-ru-stress-cf — License: Apache-2.0. The author notes that some
+    training texts/reference clips come from sources without a declared license; check before commercial use.
+Qwen3-TTS 12Hz 0.6B Base — Alibaba Qwen — huggingface.co/Qwen/Qwen3-TTS-12Hz-0.6B-Base — Apache-2.0.
+qwen-tts (Python package) — Alibaba Qwen — github.com/QwenLM/Qwen3-TTS — Apache-2.0.
+meter2 stress detector (head.pt + meter2.py, ported in app/studio/meter2.py) — siriusfreak, same repository,
+    Apache-2.0. The detector head was trained partly on Silero TTS renders (Silero models are non-commercial):
+    the author describes it as a research tool.
+wav2vec2-large-xlsr-53-russian — Jonatas Grosman — huggingface.co/jonatasgrosman/wav2vec2-large-xlsr-53-russian — Apache-2.0.
+Whisper large-v3-turbo (CTranslate2 conversion) — OpenAI / mobiuslabsgmbh — MIT; faster-whisper (SYSTRAN) — MIT.
+RUAccent — ruaccent/accentuator — github.com/Den4ikAI/ruaccent — MIT (model files under their own terms on HF).
+
+CODE
+----
+BS-RoFormer / Mel-Band RoFormer network code — lucidrains (MIT) and ZFTurbo Music-Source-Separation-Training (MIT),
+    re-implemented in pure PyTorch (from Restore Studio / Guitar Splitter).
+Speech Studio (timoncool/speech-studio) — ideas only: the back-check of a synthesised take (WER thresholds
+    10/20/35 % with 1/2/3-word slack, max 60 %, timing and repetition checks) and '+'-before-vowel stress notation.
+    No code copied (Speech Studio is written in Rust).
+Vocal Cleaner (C:\fl\vocal-cleaner) — faster-whisper loading / CUDA DLL approach.
+WORLD vocoder via pyworld — MIT / BSD. librosa (ISC), numpy/scipy (BSD), soundfile (BSD), transformers (Apache-2.0),
+    num2words (LGPL), PyTorch (BSD).
+
+UI: Tailwind CSS (MIT).

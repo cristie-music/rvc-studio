@@ -1,0 +1,919 @@
+<!DOCTYPE html>
+<html lang="ru" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RVC Studio</title>
+  <script src="/static/vendor/tailwind.js"></script>
+  <script>
+    if (!window.tailwind) document.write('<script src="https://cdn.tailwindcss.com"><\/script>');
+  </script>
+  <script>
+    tailwind.config = { darkMode: 'class', theme: { extend: { colors: { suno: {
+      DEFAULT: '#09090b', sidebar: '#000000', panel: '#121214', card: '#18181b', border: '#27272a' } } } } }
+  </script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+    body { font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif; }
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #3f3f46; border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: #52525b; }
+    .wave { width: 100%; height: 100%; display: block; }
+    .seg-btn.active { background: rgba(255,255,255,0.1); color: #fff; border-color: rgba(236,72,153,0.4); }
+    .navbtn.active { background: rgba(255,255,255,0.1); color: #fff; }
+    .drop-hover { border-color: rgba(236,72,153,.7) !important; background: rgba(236,72,153,.06); }
+    input[type=range] { -webkit-appearance: none; appearance: none; height: 4px; border-radius: 4px; background: #27272a; }
+    input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 12px; height: 12px; border-radius: 50%; background: #fff; cursor: pointer; }
+    .log-box { font-family: ui-monospace, 'Cascadia Mono', Consolas, monospace; }
+    .fade-in { animation: fi .25s ease; } @keyframes fi { from { opacity: 0; transform: translateY(4px) } to { opacity: 1; transform: none } }
+    .stv { color: #f472b6; font-weight: 700; text-decoration: underline; text-underline-offset: 3px; }
+    .w { cursor: pointer; border-radius: 4px; padding: 0 1px; }
+    .w:hover { background: rgba(255,255,255,.08); }
+    .w.hom { border-bottom: 1px dashed #f59e0b; }
+    .w.nost { color: #a1a1aa; }
+    .w.man { color: #7dd3fc; }
+    .w.bad { background: rgba(239,68,68,.25); }
+    .w.miss { background: rgba(245,158,11,.18); }
+    .inp { background: #09090b; border: 1px solid rgba(255,255,255,.1); border-radius: .5rem; padding: .25rem .5rem; font-size: 11px; outline: none; }
+    .inp:focus { border-color: rgba(236,72,153,.5); }
+  </style>
+</head>
+<body class="bg-suno text-white overflow-hidden select-none">
+<div class="flex flex-col h-screen w-screen overflow-hidden">
+  <div class="flex-1 flex overflow-hidden">
+
+    <!-- 1. Сайдбар -->
+    <aside class="w-[220px] bg-suno-sidebar border-r border-white/5 flex flex-col justify-between p-3 flex-shrink-0">
+      <div class="space-y-6">
+        <div class="flex items-center gap-3 px-2 pt-2">
+          <div class="w-10 h-10 rounded-full bg-gradient-to-br from-pink-500 to-purple-600 flex items-center justify-center shadow-lg font-bold text-sm">RVC</div>
+          <div>
+            <div class="text-sm font-bold leading-tight">RVC Studio</div>
+            <div class="text-[10px] text-zinc-500">датасет голоса из трека</div>
+          </div>
+        </div>
+        <nav class="space-y-1.5" id="nav">
+          <button data-view="new" onclick="setView('new')" class="navbtn w-full rounded-xl flex items-center gap-3 px-3 py-2.5 text-zinc-400 hover:text-white hover:bg-white/5 text-sm font-medium transition-colors">
+            <svg class="w-5 h-5 text-pink-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>Как это работает</button>
+          <button data-view="vocal" onclick="setView('vocal')" class="navbtn w-full rounded-xl flex items-center gap-3 px-3 py-2.5 text-zinc-400 hover:text-white hover:bg-white/5 text-sm font-medium transition-colors">
+            <svg class="w-5 h-5 text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-14 0m7 7v3m-4 0h8M12 15a3 3 0 003-3V5a3 3 0 10-6 0v7a3 3 0 003 3z"/></svg>Вокал</button>
+          <button data-view="clean" onclick="setView('clean')" class="navbtn w-full rounded-xl flex items-center gap-3 px-3 py-2.5 text-zinc-400 hover:text-white hover:bg-white/5 text-sm font-medium transition-colors">
+            <svg class="w-5 h-5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-width="2" d="M4 12h2l2-5 3 10 3-8 2 3h4"/></svg>1 · Чистый голос</button>
+          <button data-view="tts" onclick="setView('tts')" class="navbtn w-full rounded-xl flex items-center gap-3 px-3 py-2.5 text-zinc-400 hover:text-white hover:bg-white/5 text-sm font-medium transition-colors">
+            <svg class="w-5 h-5 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h6m-6 4h8M5 4h14a2 2 0 012 2v12a2 2 0 01-2 2H5a2 2 0 01-2-2V6a2 2 0 012-2z"/></svg>2 · Озвучка текста</button>
+          <button data-view="aug" onclick="setView('aug')" class="navbtn w-full rounded-xl flex items-center gap-3 px-3 py-2.5 text-zinc-400 hover:text-white hover:bg-white/5 text-sm font-medium transition-colors">
+            <svg class="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"/></svg>3 · Копии по высоте</button>
+          <button data-view="dataset" onclick="setView('dataset')" class="navbtn w-full rounded-xl flex items-center gap-3 px-3 py-2.5 text-zinc-400 hover:text-white hover:bg-white/5 text-sm font-medium transition-colors">
+            <svg class="w-5 h-5 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>Датасет и обучение</button>
+          <button data-view="projects" onclick="setView('projects')" class="navbtn w-full rounded-xl flex items-center gap-3 px-3 py-2.5 text-zinc-400 hover:text-white hover:bg-white/5 text-sm font-medium transition-colors">
+            <svg class="w-5 h-5 text-zinc-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V7z"/></svg>Проекты</button>
+        </nav>
+      </div>
+      <div class="space-y-3">
+        <div class="p-3 rounded-xl bg-zinc-900/50 text-[11px] space-y-1.5 border border-white/5 font-mono">
+          <div class="flex justify-between text-zinc-400 gap-2"><span>Устр.</span><span id="sysKind" class="text-zinc-500">…</span></div>
+          <div class="text-zinc-300 truncate" id="sysName">определение…</div>
+          <div class="flex justify-between text-zinc-400"><span>VRAM / RAM</span><span id="sysMem">—</span></div>
+          <div class="flex justify-between text-zinc-400"><span>Backend</span><span id="sysBackend" class="text-pink-400">—</span></div>
+        </div>
+        <div class="text-[10px] text-zinc-600 px-1" id="sysVersion">RVC Studio</div>
+      </div>
+    </aside>
+
+    <!-- 2. Панель настроек -->
+    <section class="w-[400px] bg-suno-panel border-r border-white/5 flex flex-col flex-shrink-0 h-full overflow-y-auto">
+      <div class="p-4 pb-12 space-y-4">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-bold text-zinc-400 uppercase tracking-wider">Подготовка датасета</span>
+          <span id="panelStatusBadge" class="text-[10px] bg-green-500/10 text-green-400 border border-green-500/20 px-2 py-0.5 rounded-full font-mono">READY</span>
+        </div>
+
+        <div id="dropZone" class="bg-suno-card border-2 border-dashed border-white/10 hover:border-pink-500/50 rounded-xl p-5 text-center cursor-pointer transition-all">
+          <input type="file" id="fileInput" accept="audio/*,.flac,.wav,.mp3,.ogg,.aif,.aiff,.m4a" class="hidden">
+          <div class="text-3xl mb-1">🎤</div>
+          <div class="text-sm font-semibold text-zinc-200">Перетащите трек или нажмите</div>
+          <div class="text-[11px] text-zinc-500 mt-1">WAV, MP3, FLAC, OGG · песня с голосом, который нужен</div>
+          <div id="uploadBar" class="hidden mt-3 h-1.5 bg-zinc-800 rounded-full overflow-hidden"><div id="uploadFill" class="h-full bg-gradient-to-r from-orange-500 to-pink-600 w-0 transition-all"></div></div>
+        </div>
+        <div class="flex gap-2">
+          <input id="pathInput" type="text" placeholder="…или путь к файлу: C:\music\song.wav" class="flex-1 bg-zinc-900 border border-white/10 rounded-xl px-3 py-2 text-[11px] text-white outline-none placeholder-zinc-600 focus:border-pink-500/50">
+          <button onclick="importPath()" class="px-3 rounded-xl text-[11px] bg-white/5 hover:bg-white/10 border border-white/10">Открыть</button>
+        </div>
+
+        <div id="trackCard" class="hidden bg-suno-card rounded-xl border border-white/5 p-3 flex items-center gap-3">
+          <div class="w-10 h-10 rounded-lg bg-gradient-to-br from-orange-500 to-pink-600 flex items-center justify-center text-lg flex-shrink-0">♪</div>
+          <div class="min-w-0 flex-1">
+            <div id="trackName" class="text-sm font-semibold truncate">—</div>
+            <div id="trackMeta" class="text-[11px] text-zinc-500 truncate">—</div>
+          </div>
+          <button onclick="playRel('source', 'Оригинал')" title="Слушать оригинал" class="w-8 h-8 rounded-full bg-white text-black flex items-center justify-center hover:scale-105 transition-transform flex-shrink-0"><svg class="w-3.5 h-3.5 ml-0.5" fill="currentColor" viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg></button>
+        </div>
+
+        <!-- Вокал -->
+        <div class="bg-suno-card rounded-xl border border-white/5 p-3 space-y-3">
+          <div class="text-[11px] font-bold text-zinc-400 uppercase tracking-wider">Шаг 1 · Вокал без эффектов</div>
+          <label class="flex items-center justify-between cursor-pointer"><span><span class="text-xs font-semibold">Только основной голос</span><span class="block text-[10px] text-zinc-500">убрать бэк-вокал, хоры, даблы (модель Karaoke)</span></span><input id="opt_lead" type="checkbox" checked class="accent-pink-500 w-4 h-4"></label>
+          <div class="space-y-1">
+            <div class="flex justify-between text-xs"><span class="text-zinc-400">Убрать эхо и ревер</span><span id="dereverbHint" class="text-[10px] text-zinc-500"></span></div>
+            <div class="grid grid-cols-4 gap-1" id="dereverbSeg">
+              <button data-v="off" class="seg-btn text-[11px] py-1.5 rounded-lg border border-white/10 text-zinc-400 hover:text-white">Нет</button>
+              <button data-v="light" class="seg-btn text-[11px] py-1.5 rounded-lg border border-white/10 text-zinc-400 hover:text-white">Ревер</button>
+              <button data-v="normal" class="seg-btn active text-[11px] py-1.5 rounded-lg border border-white/10 text-zinc-400 hover:text-white">Эхо+ревер</button>
+              <button data-v="strong" class="seg-btn text-[11px] py-1.5 rounded-lg border border-white/10 text-zinc-400 hover:text-white">Максимум</button>
+            </div>
+          </div>
+          <div class="space-y-1">
+            <span class="text-xs text-zinc-400">Качество разделения</span>
+            <div class="grid grid-cols-3 gap-1" id="qualitySeg">
+              <button data-v="fast" class="seg-btn text-[11px] py-1.5 rounded-lg border border-white/10 text-zinc-400 hover:text-white">Быстро</button>
+              <button data-v="normal" class="seg-btn active text-[11px] py-1.5 rounded-lg border border-white/10 text-zinc-400 hover:text-white">Норма</button>
+              <button data-v="high" class="seg-btn text-[11px] py-1.5 rounded-lg border border-white/10 text-zinc-400 hover:text-white">Максимум</button>
+            </div>
+          </div>
+          <div class="space-y-1">
+            <span class="text-xs text-zinc-400">Устройство</span>
+            <div class="grid grid-cols-3 gap-1" id="deviceSeg">
+              <button data-v="auto" class="seg-btn active text-[11px] py-1.5 rounded-lg border border-white/10 text-zinc-400 hover:text-white">Авто</button>
+              <button data-v="gpu" class="seg-btn text-[11px] py-1.5 rounded-lg border border-white/10 text-zinc-400 hover:text-white">GPU</button>
+              <button data-v="cpu" class="seg-btn text-[11px] py-1.5 rounded-lg border border-white/10 text-zinc-400 hover:text-white">CPU</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Варианты -->
+        <div class="bg-suno-card rounded-xl border border-white/5 overflow-hidden">
+          <div class="px-3 py-2 text-[11px] font-bold text-zinc-400 border-b border-white/5 uppercase">Шаг 2 · Из чего собрать датасет</div>
+          <div class="p-3 space-y-3 text-xs">
+            <label class="flex items-start justify-between gap-2 cursor-pointer"><span><span class="font-semibold">1 · Чистый голос из трека</span><span class="block text-[10px] text-zinc-500">убрать паузы, шумы, вдохи; нарезать 2–10 с; оценить каждый кусок</span></span><input id="v_clean" type="checkbox" checked class="accent-pink-500 w-4 h-4 mt-0.5"></label>
+            <div class="pl-2 border-l border-white/10 space-y-2">
+              <div class="flex items-center justify-between gap-2"><span class="text-zinc-400">Шумоподавление</span>
+                <div class="grid grid-cols-4 gap-1 w-48" id="denoiseSeg">
+                  <button data-v="off" class="seg-btn text-[10px] py-1 rounded-lg border border-white/10 text-zinc-400">нет</button>
+                  <button data-v="light" class="seg-btn active text-[10px] py-1 rounded-lg border border-white/10 text-zinc-400">мягко</button>
+                  <button data-v="normal" class="seg-btn text-[10px] py-1 rounded-lg border border-white/10 text-zinc-400">норма</button>
+                  <button data-v="strong" class="seg-btn text-[10px] py-1 rounded-lg border border-white/10 text-zinc-400">сильно</button>
+                </div></div>
+              <div class="flex items-center justify-between gap-2"><span class="text-zinc-400">Вдохи</span>
+                <div class="grid grid-cols-3 gap-1 w-48" id="breathSeg">
+                  <button data-v="keep" class="seg-btn text-[10px] py-1 rounded-lg border border-white/10 text-zinc-400">оставить</button>
+                  <button data-v="soften" class="seg-btn active text-[10px] py-1 rounded-lg border border-white/10 text-zinc-400">тише</button>
+                  <button data-v="remove" class="seg-btn text-[10px] py-1 rounded-lg border border-white/10 text-zinc-400">убрать</button>
+                </div></div>
+              <div class="flex items-center justify-between gap-2"><span class="text-zinc-400">Длина кусков, с</span>
+                <span class="flex items-center gap-1"><input id="minLen" type="number" step="0.5" value="2" class="inp w-14 text-right font-mono"> – <input id="maxLen" type="number" step="0.5" value="10" class="inp w-14 text-right font-mono"></span></div>
+              <div class="flex items-center justify-between gap-2"><span class="text-zinc-400">Частота датасета</span>
+                <select id="targetSr" class="inp"><option value="32000">32 кГц</option><option value="40000" selected>40 кГц (рекомендуется)</option><option value="48000">48 кГц</option></select></div>
+            </div>
+
+            <label class="flex items-start justify-between gap-2 cursor-pointer pt-1"><span><span class="font-semibold">2 · Озвучка текста голосом певца</span><span class="block text-[10px] text-zinc-500">Qwen3-TTS клонирует голос и читает текст; ударения RUAccent, проверка распознаванием и meter2, перегенерация неудачных</span></span><input id="v_tts" type="checkbox" checked class="accent-pink-500 w-4 h-4 mt-0.5"></label>
+            <div class="pl-2 border-l border-white/10 space-y-2">
+              <div class="flex items-center justify-between gap-2"><span class="text-zinc-400">Текст</span>
+                <span class="flex items-center gap-1"><span id="textName" class="text-[10px] text-zinc-500 truncate max-w-[120px]">harry.txt</span><button onclick="openTextEditor()" class="text-[10px] bg-white/5 hover:bg-white/10 px-2 py-1 rounded border border-white/10">Изменить</button></span></div>
+              <div class="flex items-center justify-between gap-2"><span class="text-zinc-400" title="Блок ≈ одно-два предложения, ~6–8 с речи. 0 = весь текст">Блоков (0 = весь текст)</span>
+                <input id="maxBlocks" type="number" min="0" value="60" class="inp w-16 text-right font-mono"></div>
+              <div class="flex items-center justify-between gap-2"><span class="text-zinc-400">Попыток на блок</span>
+                <input id="takes" type="number" min="1" max="8" value="3" class="inp w-16 text-right font-mono"></div>
+              <div class="flex items-center justify-between gap-2"><span class="text-zinc-400">Строгость проверки</span>
+                <select id="strictness" class="inp"><option value="strict">строго (10% слов)</option><option value="normal" selected>норма (20%)</option><option value="lenient">мягко (35%)</option></select></div>
+              <div class="flex items-center justify-between gap-2"><span class="text-zinc-400">Клонирование</span>
+                <select id="clone" class="inp"><option value="xvec" selected>по тембру (рекомендуется)</option><option value="icl">по образцу + тексту образца</option></select></div>
+              <div class="flex items-center justify-between gap-2"><span class="text-zinc-400">Модель</span>
+                <select id="ttsModel" class="inp"><option value="tts" selected>1.7B + ударения</option><option value="tts_fast">0.6B быстрая (CPU)</option></select></div>
+            </div>
+
+            <label class="flex items-start justify-between gap-2 cursor-pointer pt-1"><span><span class="font-semibold">3 · Копии со сдвигом высоты</span><span class="block text-[10px] text-zinc-500">шире диапазон; тембр (форманты) сохраняется — вокодер WORLD</span></span><input id="v_aug" type="checkbox" class="accent-pink-500 w-4 h-4 mt-0.5"></label>
+            <div class="pl-2 border-l border-white/10">
+              <div class="flex items-center justify-between gap-2"><span class="text-zinc-400">Полутоны</span><input id="semis" type="text" value="-2,-1,1,2" class="inp w-28 text-right font-mono"></div>
+            </div>
+          </div>
+        </div>
+
+        <button id="btnRun" onclick="startRun()" disabled class="w-full h-12 rounded-xl font-bold text-sm bg-gradient-to-r from-orange-500 to-pink-600 hover:brightness-110 active:scale-[0.98] transition-all flex items-center justify-center gap-2 shadow-lg disabled:opacity-40 disabled:cursor-not-allowed">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+          <span id="btnRunText">Сначала выберите трек</span>
+        </button>
+
+        <div id="progressBox" class="hidden p-3 rounded-xl bg-pink-500/10 border border-pink-500/20 space-y-2.5">
+          <div class="flex items-center justify-between gap-2">
+            <div class="flex items-center gap-2 text-xs font-semibold text-pink-400 min-w-0">
+              <div id="progDot" class="w-2 h-2 rounded-full bg-pink-500 animate-ping flex-shrink-0"></div>
+              <span id="progTitle" class="truncate">Обработка…</span>
+            </div>
+            <button id="btnCancel" onclick="cancelRun()" class="text-[10px] text-zinc-400 hover:text-red-400 flex-shrink-0">Отменить</button>
+          </div>
+          <div class="h-1.5 bg-zinc-800 rounded-full overflow-hidden"><div id="progFill" class="h-full bg-gradient-to-r from-orange-500 to-pink-600 transition-all" style="width:0%"></div></div>
+          <div id="progStep" class="text-[11px] font-mono text-zinc-300 truncate">…</div>
+          <div id="stepList" class="space-y-1 text-[11px]"></div>
+          <button onclick="toggleLog()" class="text-[10px] text-zinc-500 hover:text-white">▸ Подробный лог</button>
+          <pre id="logBox" class="hidden log-box text-[10px] leading-snug text-zinc-400 bg-black/50 rounded-lg p-2 max-h-72 overflow-auto whitespace-pre-wrap select-text"></pre>
+        </div>
+      </div>
+    </section>
+
+    <!-- 3. Главная область -->
+    <main class="flex-1 bg-suno flex flex-col h-full overflow-hidden p-6">
+      <div class="max-w-5xl w-full mx-auto flex flex-col h-full">
+        <div class="flex items-start justify-between mb-4 flex-shrink-0 gap-4">
+          <div class="min-w-0">
+            <h1 id="viewTitle" class="text-xl font-bold truncate">RVC Studio</h1>
+            <p id="viewSub" class="text-xs text-zinc-500">Датасет для обучения голоса RVC из песни</p>
+          </div>
+          <div id="projChips" class="flex flex-wrap gap-1.5 justify-end flex-shrink-0"></div>
+        </div>
+        <div id="viewBody" class="flex-1 overflow-y-auto pr-2 pb-8"></div>
+      </div>
+    </main>
+  </div>
+
+  <!-- 4. Нижний плеер -->
+  <div id="globalPlayerBar" class="hidden h-20 bg-black/95 border-t border-white/10 px-6 flex items-center justify-between flex-shrink-0 z-40">
+    <div class="flex items-center gap-3 w-1/4 min-w-0">
+      <div class="w-12 h-12 rounded-lg bg-gradient-to-br from-pink-500 to-purple-600 flex items-center justify-center text-xs font-bold shadow-md flex-shrink-0">RVC</div>
+      <div class="overflow-hidden"><div id="playerTitle" class="text-sm font-bold truncate">—</div><div id="playerSubtitle" class="text-xs text-zinc-500 truncate">—</div></div>
+    </div>
+    <div class="flex flex-col items-center gap-1.5 flex-1 max-w-xl">
+      <div class="flex items-center gap-4">
+        <button onclick="toggleLoopFlag()" id="playerLoopBtn" title="Повтор" class="text-zinc-500 hover:text-white text-sm">⟲</button>
+        <button onclick="toggleGlobalAudio()" class="w-10 h-10 rounded-full bg-white text-black flex items-center justify-center hover:scale-105 active:scale-95 transition-transform shadow-lg">
+          <svg id="playerPlayIcon" class="w-4 h-4 ml-0.5" fill="currentColor" viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+          <svg id="playerPauseIcon" class="w-4 h-4 hidden" fill="currentColor" viewBox="0 0 24 24"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
+        </button>
+        <a id="playerDl" href="#" title="Скачать" class="text-zinc-500 hover:text-white text-sm">⤓</a>
+      </div>
+      <div class="flex items-center gap-3 w-full text-[11px] font-mono text-zinc-400">
+        <span id="playerCurrentTime">0:00</span>
+        <input id="playerProgress" type="range" min="0" max="1000" value="0" oninput="seekAudio(this.value)" class="flex-1 accent-pink-500 cursor-pointer">
+        <span id="playerDuration">0:00</span>
+      </div>
+    </div>
+    <div class="flex items-center justify-end gap-2 w-1/4">
+      <input type="range" min="0" max="1" step="0.05" value="1" oninput="globalAudio.volume = this.value" class="w-20 accent-pink-500 cursor-pointer">
+      <button onclick="closePlayer()" class="text-zinc-500 hover:text-white ml-2">✕</button>
+    </div>
+  </div>
+</div>
+
+<audio id="globalAudio" class="hidden" preload="auto"></audio>
+
+<!-- Текст для озвучки -->
+<div id="textModal" class="hidden fixed inset-0 bg-black/75 backdrop-blur-sm z-50 flex items-center justify-center p-4" onclick="if(event.target===this)closeModal('textModal')">
+  <div class="bg-suno-card border border-white/10 rounded-2xl w-full max-w-4xl p-6 space-y-4 shadow-2xl flex flex-col max-h-[90vh]">
+    <div class="flex items-center justify-between border-b border-white/5 pb-3">
+      <h2 class="text-base font-bold">Текст для озвучки</h2>
+      <button onclick="closeModal('textModal')" class="text-zinc-400 hover:text-white text-lg">✕</button>
+    </div>
+    <div class="text-[11px] text-zinc-500">Любой русский текст: глава книги, статья. Ударение можно указать вручную знаком <b class="text-zinc-300">+</b> перед гласной (з+амок / зам+ок) — ручные метки важнее автоматических. Числа превращаются в слова сами.</div>
+    <textarea id="textArea" class="flex-1 min-h-[45vh] bg-black/50 border border-white/10 rounded-xl p-3 text-xs leading-relaxed outline-none select-text focus:border-pink-500/50"></textarea>
+    <div id="textPreview" class="hidden max-h-40 overflow-auto text-xs bg-black/40 rounded-xl p-3 leading-relaxed select-text"></div>
+    <div class="flex flex-wrap gap-2 justify-between">
+      <div class="flex gap-2">
+        <label class="text-[11px] bg-white/5 hover:bg-white/10 px-3 py-2 rounded-lg border border-white/10 cursor-pointer">Загрузить .txt<input type="file" accept=".txt,text/plain" class="hidden" onchange="loadTxt(this)"></label>
+        <button onclick="resetText()" class="text-[11px] bg-white/5 hover:bg-white/10 px-3 py-2 rounded-lg border border-white/10">Вернуть текст по умолчанию</button>
+        <button onclick="previewStress()" class="text-[11px] bg-white/5 hover:bg-white/10 px-3 py-2 rounded-lg border border-white/10">Показать ударения (начало)</button>
+      </div>
+      <button onclick="saveText()" class="text-[11px] font-bold bg-gradient-to-r from-orange-500 to-pink-600 px-4 py-2 rounded-lg">Сохранить</button>
+    </div>
+  </div>
+</div>
+
+<!-- Выбор ударения -->
+<div id="stressPop" class="hidden fixed z-50 bg-zinc-900 border border-white/15 rounded-xl shadow-2xl p-3 text-xs space-y-2 w-72"></div>
+
+<div id="toast" class="hidden fixed bottom-24 left-1/2 -translate-x-1/2 bg-zinc-900 border border-white/10 text-xs px-4 py-2 rounded-xl shadow-2xl z-50"></div>
+
+<script>
+// ============================================================ state
+const S = { sys: null, pid: null, man: null, view: 'new', poll: null, logSince: 0,
+            device: 'auto', quality: 'normal', dereverb: 'normal', denoise: 'light', breaths: 'soften',
+            tts: { filter: 'all' }, slicesFilter: 'all' };
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const fmtT = s => { s = Math.max(0, s||0); return Math.floor(s/60) + ':' + String(Math.floor(s%60)).padStart(2,'0'); };
+const fmtMin = s => (s/60).toFixed(1) + ' мин';
+const fileUrl = (rel, dl) => `/files/${S.pid}/${rel.split('/').map(encodeURIComponent).join('/')}${dl ? '?dl=1' : ''}`;
+const VOW = 'аеёиоуыэюяАЕЁИОУЫЭЮЯ';
+async function api(url, opts) {
+  const r = await fetch(url, opts);
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(j.error || r.statusText);
+  return j;
+}
+const post = (url, body) => api(url, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(body || {}) });
+function toast(msg, ms = 2800) {
+  const t = $('toast'); t.textContent = msg; t.classList.remove('hidden');
+  clearTimeout(t._h); t._h = setTimeout(() => t.classList.add('hidden'), ms);
+}
+function closeModal(id) { $(id).classList.add('hidden'); }
+
+// ============================================================ system
+async function loadSystem() {
+  try {
+    S.sys = await api('/api/system');
+    const s = S.sys;
+    $('sysKind').textContent = s.kind === 'cpu' ? 'CPU' : 'GPU';
+    $('sysKind').className = s.kind === 'cpu' ? 'text-amber-400' : 'text-green-400';
+    $('sysName').textContent = s.name; $('sysName').title = s.label;
+    $('sysMem').textContent = (s.vram_gb ? s.vram_gb.toFixed(0) + ' GB / ' : '') + (s.ram_gb ? s.ram_gb.toFixed(0) + ' GB' : '—');
+    $('sysBackend').textContent = s.kind === 'cpu' ? `CPU ×${s.threads}` : s.backend;
+    $('sysVersion').textContent = `RVC Studio ${s.version} · torch ${s.torch || '—'}${s.colab ? ' · Colab' : ''}`;
+    if (s.kind === 'cpu') { $('ttsModel').value = 'tts_fast'; $('maxBlocks').value = 20; }
+    if (S.view === 'new') render();
+  } catch (e) { $('sysName').textContent = 'сервер недоступен'; }
+}
+
+// ============================================================ segmented buttons
+function bindSeg(id, key) {
+  $(id).querySelectorAll('.seg-btn').forEach(b => b.onclick = () => {
+    $(id).querySelectorAll('.seg-btn').forEach(x => x.classList.remove('active'));
+    b.classList.add('active'); S[key] = b.dataset.v;
+  });
+}
+function setSeg(id, key, v) {
+  if (v == null) return; S[key] = v;
+  $(id).querySelectorAll('.seg-btn').forEach(x => x.classList.toggle('active', x.dataset.v === v));
+}
+bindSeg('deviceSeg', 'device'); bindSeg('qualitySeg', 'quality'); bindSeg('dereverbSeg', 'dereverb');
+bindSeg('denoiseSeg', 'denoise'); bindSeg('breathSeg', 'breaths');
+
+function gatherOptions() {
+  return {
+    device: S.device, quality: S.quality, lead_only: $('opt_lead').checked, dereverb: S.dereverb,
+    variants: { clean: $('v_clean').checked, tts: $('v_tts').checked, aug: $('v_aug').checked },
+    clean: { denoise: S.denoise, breaths: S.breaths, min_len: +$('minLen').value || 2, max_len: +$('maxLen').value || 10,
+             target_sr: +$('targetSr').value, level_db: -20, min_score: 45 },
+    aug: { semis: $('semis').value.split(/[,; ]+/).map(Number).filter(v => v && Math.abs(v) <= 12) },
+    tts: { model: $('ttsModel').value, max_blocks: +$('maxBlocks').value || 0, takes: +$('takes').value || 3,
+           strictness: $('strictness').value, clone: $('clone').value, temperature: 0.8 },
+  };
+}
+function applyOptions(o) {
+  if (!o) return;
+  setSeg('deviceSeg', 'device', o.device); setSeg('qualitySeg', 'quality', o.quality); setSeg('dereverbSeg', 'dereverb', o.dereverb);
+  $('opt_lead').checked = !!o.lead_only;
+  if (o.variants) { $('v_clean').checked = !!o.variants.clean; $('v_tts').checked = !!o.variants.tts; $('v_aug').checked = !!o.variants.aug; }
+  if (o.clean) { setSeg('denoiseSeg', 'denoise', o.clean.denoise); setSeg('breathSeg', 'breaths', o.clean.breaths);
+    $('minLen').value = o.clean.min_len; $('maxLen').value = o.clean.max_len; $('targetSr').value = o.clean.target_sr; }
+  if (o.aug) $('semis').value = (o.aug.semis || []).join(',');
+  if (o.tts) { $('ttsModel').value = o.tts.model; $('maxBlocks').value = o.tts.max_blocks; $('takes').value = o.tts.takes;
+    $('strictness').value = o.tts.strictness; $('clone').value = o.tts.clone || 'xvec'; }
+}
+
+// ============================================================ upload / open
+const dz = $('dropZone');
+dz.onclick = () => $('fileInput').click();
+dz.ondragover = e => { e.preventDefault(); dz.classList.add('drop-hover'); };
+dz.ondragleave = () => dz.classList.remove('drop-hover');
+dz.ondrop = e => { e.preventDefault(); dz.classList.remove('drop-hover'); if (e.dataTransfer.files[0]) upload(e.dataTransfer.files[0]); };
+$('fileInput').onchange = e => { if (e.target.files[0]) upload(e.target.files[0]); };
+function upload(file) {
+  $('uploadBar').classList.remove('hidden');
+  const x = new XMLHttpRequest();
+  x.open('POST', '/api/upload?name=' + encodeURIComponent(file.name));
+  x.upload.onprogress = e => { if (e.lengthComputable) $('uploadFill').style.width = (100 * e.loaded / e.total) + '%'; };
+  x.onload = () => {
+    $('uploadBar').classList.add('hidden'); $('uploadFill').style.width = '0';
+    let j = {}; try { j = JSON.parse(x.responseText); } catch (e) {}
+    if (x.status !== 200) return toast('Ошибка: ' + (j.error || x.statusText));
+    openProject(j.id, 'vocal');
+  };
+  x.onerror = () => toast('Загрузка не удалась');
+  x.send(file);
+}
+async function importPath() {
+  const p = $('pathInput').value.trim(); if (!p) return;
+  try { const j = await post('/api/import', { path: p }); $('pathInput').value = ''; openProject(j.id, 'vocal'); }
+  catch (e) { toast(e.message); }
+}
+
+// ============================================================ project
+async function openProject(pid, view) {
+  S.pid = pid; S.logSince = 0; $('logBox').textContent = '';
+  try { localStorage.setItem('rvc_pid', pid); } catch (e) {}
+  await reloadProject(true);
+  if (view) setView(view);
+  const j = S.man.job;
+  if (j && (j.status === 'running' || j.status === 'queued')) startPolling();
+}
+async function reloadProject(applyOpts) {
+  if (!S.pid) return;
+  try { S.man = await api('/api/projects/' + S.pid); } catch (e) { S.pid = null; S.man = null; updatePanel(); return; }
+  if (applyOpts) applyOptions(S.man.options);
+  updatePanel(); render();
+  loadTextName();
+}
+async function loadTextName() {
+  if (!S.pid) return;
+  try { const t = await api('/api/text/' + S.pid); $('textName').textContent = t.name; } catch (e) {}
+}
+function updatePanel() {
+  const m = S.man;
+  $('trackCard').classList.toggle('hidden', !m);
+  $('btnRun').disabled = !m;
+  if (!m) { $('btnRunText').textContent = 'Сначала выберите трек'; return; }
+  $('trackName').textContent = m.name;
+  const s = m.summary || {};
+  $('trackMeta').textContent = `${m.duration ? fmtT(m.duration) : ''}${s.total_s ? ' · датасет ' + fmtMin(s.total_s) : ''}`;
+  const running = m.job && (m.job.status === 'running' || m.job.status === 'queued');
+  $('btnRunText').textContent = running ? 'Обработка…' : (m.status === 'new' ? 'Подготовить датасет' : 'Пересчитать с новыми настройками');
+  $('btnRun').disabled = running;
+  const badge = $('panelStatusBadge');
+  const st = running ? 'RUNNING' : (m.status || 'new').toUpperCase();
+  badge.textContent = st;
+  badge.className = 'text-[10px] px-2 py-0.5 rounded-full font-mono border ' + (running ? 'bg-pink-500/10 text-pink-400 border-pink-500/20' :
+    st === 'ERROR' ? 'bg-red-500/10 text-red-400 border-red-500/20' : 'bg-green-500/10 text-green-400 border-green-500/20');
+  const chips = [];
+  if (s.clean_s) chips.push(['голос', fmtMin(s.clean_s), 'emerald']);
+  if (s.tts_s) chips.push(['озвучка', fmtMin(s.tts_s), 'purple']);
+  if (s.aug_s) chips.push(['копии', fmtMin(s.aug_s), 'blue']);
+  if (m.training) chips.push(['эпох', m.training.epochs, 'amber']);
+  $('projChips').innerHTML = chips.map(([a, b, c]) => `<span class="text-[10px] px-2 py-1 rounded-full bg-${c}-500/10 text-${c}-300 border border-${c}-500/20">${a}: <b>${b}</b></span>`).join('');
+}
+
+async function startRun() {
+  if (!S.pid) return;
+  try {
+    await post(`/api/projects/${S.pid}/run`, gatherOptions());
+    S.logSince = 0; $('logBox').textContent = '';
+    startPolling(); toast('Обработка запущена');
+  } catch (e) { toast(e.message); }
+}
+async function cancelRun() { if (S.pid) await post(`/api/projects/${S.pid}/cancel`); }
+function toggleLog() { $('logBox').classList.toggle('hidden'); }
+function startPolling() {
+  clearInterval(S.poll);
+  $('progressBox').classList.remove('hidden');
+  S.poll = setInterval(pollJob, 1000); pollJob();
+}
+async function pollJob() {
+  if (!S.pid) return;
+  let j;
+  try { j = await api(`/api/jobs/${S.pid}?since=${S.logSince}`); } catch (e) { return; }
+  if (j.status === 'none') { clearInterval(S.poll); return; }
+  $('progFill').style.width = (100 * j.progress).toFixed(1) + '%';
+  $('progStep').textContent = j.step || '';
+  $('progTitle').textContent = { queued: 'В очереди…', running: 'Обработка…', done: 'Готово', error: 'Ошибка', cancelled: 'Отменено' }[j.status] || j.status;
+  $('progDot').className = 'w-2 h-2 rounded-full flex-shrink-0 ' + (j.status === 'running' ? 'bg-pink-500 animate-ping' : j.status === 'done' ? 'bg-green-500' : 'bg-red-500');
+  $('stepList').innerHTML = (j.steps || []).map(s => `<div class="flex justify-between gap-2"><span class="${s.state === 'done' ? 'text-zinc-300' : s.state === 'run' ? 'text-pink-300' : 'text-zinc-600'}">${{done:'✓', run:'▸', wait:'·', error:'✗', skip:'–'}[s.state] || '·'} ${esc(s.title)}</span><span class="text-zinc-500 truncate">${esc(s.note || '')}</span></div>`).join('');
+  if (j.log && j.log.length) {
+    const lb = $('logBox'); lb.textContent += j.log.join('\n') + '\n'; lb.scrollTop = lb.scrollHeight;
+    S.logSince = j.log_len;
+  }
+  $('btnCancel').classList.toggle('hidden', !(j.status === 'running' || j.status === 'queued'));
+  if (j.status === 'running' && Date.now() - (S._lastReload || 0) > 8000 && S.view === 'tts') { S._lastReload = Date.now(); reloadProject(false); }
+  if (!(j.status === 'running' || j.status === 'queued')) {
+    clearInterval(S.poll);
+    await reloadProject(false);
+    if (j.status === 'done' && S.man.training && j.kind === 'process') {
+      toast(`Датасет готов: ${fmtMin(S.man.summary.total_s)} · рекомендуется ${S.man.training.epochs} эпох`, 6000);
+      setView('dataset');
+    }
+    if (j.status === 'error') toast('Ошибка: ' + (j.error || ''), 6000);
+  }
+}
+
+// ============================================================ player
+const globalAudio = $('globalAudio');
+let loopFlag = false;
+function playUrl(url, title, sub, dl) {
+  $('globalPlayerBar').classList.remove('hidden');
+  if (globalAudio.dataset.url === url && !globalAudio.paused) { globalAudio.pause(); return; }
+  if (globalAudio.dataset.url !== url) { globalAudio.src = url; globalAudio.dataset.url = url; }
+  $('playerTitle').textContent = title || '—'; $('playerSubtitle').textContent = sub || '';
+  $('playerDl').href = dl || url + (url.includes('?') ? '&' : '?') + 'dl=1';
+  globalAudio.play().catch(() => {});
+}
+function playRel(rel, title, sub) {
+  if (!S.man) return;
+  if (rel === 'source') rel = S.man.source;
+  playUrl(fileUrl(rel), title, sub || S.man.name);
+}
+function toggleGlobalAudio() { globalAudio.paused ? globalAudio.play() : globalAudio.pause(); }
+function toggleLoopFlag() { loopFlag = !loopFlag; globalAudio.loop = loopFlag; $('playerLoopBtn').classList.toggle('text-pink-400', loopFlag); }
+function seekAudio(v) { if (globalAudio.duration) globalAudio.currentTime = v / 1000 * globalAudio.duration; }
+function closePlayer() { globalAudio.pause(); $('globalPlayerBar').classList.add('hidden'); }
+globalAudio.ontimeupdate = () => {
+  $('playerCurrentTime').textContent = fmtT(globalAudio.currentTime);
+  $('playerDuration').textContent = fmtT(globalAudio.duration);
+  if (globalAudio.duration) $('playerProgress').value = 1000 * globalAudio.currentTime / globalAudio.duration;
+};
+globalAudio.onplay = () => { $('playerPlayIcon').classList.add('hidden'); $('playerPauseIcon').classList.remove('hidden'); };
+globalAudio.onpause = () => { $('playerPlayIcon').classList.remove('hidden'); $('playerPauseIcon').classList.add('hidden'); };
+document.addEventListener('keydown', e => {
+  if (e.code === 'Space' && !['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement.tagName) && globalAudio.src) { e.preventDefault(); toggleGlobalAudio(); }
+});
+const PLAY_SVG = '<svg class="w-3 h-3 ml-0.5" fill="currentColor" viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg>';
+const playBtn = (onclick, title) => `<button onclick="${onclick}" title="${title || 'Слушать'}" class="w-7 h-7 rounded-full bg-white text-black flex items-center justify-center hover:scale-105 transition-transform flex-shrink-0">${PLAY_SVG}</button>`;
+
+async function drawWave(canvas, rel, color) {
+  try {
+    const d = await api(`/api/peaks/${S.pid}/${rel.split('/').map(encodeURIComponent).join('/')}?n=600`);
+    const c = canvas, ctx = c.getContext('2d');
+    c.width = c.clientWidth * devicePixelRatio; c.height = c.clientHeight * devicePixelRatio;
+    const w = c.width, h = c.height, p = d.peaks, n = p.length;
+    ctx.fillStyle = color;
+    for (let i = 0; i < n; i++) { const v = Math.max(1, p[i] * h * 0.95); ctx.fillRect(i / n * w, (h - v) / 2, Math.max(1, w / n - 0.5), v); }
+  } catch (e) {}
+}
+
+// ============================================================ views
+const VIEWS = {
+  new: ['Как это работает', 'Песня → голос без музыки и эффектов → датасет для RVC'],
+  vocal: ['Вокал', 'Разделение трека, основной голос, удаление эха и ревера'],
+  clean: ['Вариант 1 · Чистый голос', 'Куски голоса из песни без пауз и шумов; уберите галочку у неудачных'],
+  tts: ['Вариант 2 · Озвучка текста', 'Голос певца читает текст; ударения и проверка каждого блока'],
+  aug: ['Вариант 3 · Копии по высоте', 'Тот же голос на полутона выше и ниже, тембр сохранён'],
+  dataset: ['Датасет и обучение', 'Итог, рекомендуемые эпохи для RVC, экспорт'],
+  projects: ['Проекты', 'Все обработанные треки'],
+};
+function setView(v) {
+  S.view = v;
+  document.querySelectorAll('.navbtn').forEach(b => b.classList.toggle('active', b.dataset.view === v));
+  $('viewTitle').textContent = VIEWS[v][0]; $('viewSub').textContent = VIEWS[v][1];
+  try { history.replaceState(null, '', '#' + (S.pid ? encodeURIComponent(S.pid) + '/' : '') + v); } catch (e) {}
+  render();
+}
+function render() {
+  const f = { new: renderNew, vocal: renderVocal, clean: renderClean, tts: renderTts, aug: renderAug, dataset: renderDataset, projects: renderProjects }[S.view];
+  f && f();
+}
+const empty = (msg) => `<div class="h-64 flex flex-col items-center justify-center text-zinc-500 text-sm gap-2"><div class="text-4xl">🎙️</div>${msg}</div>`;
+const card = (inner, cls = '') => `<div class="bg-suno-card rounded-xl border border-white/5 p-4 ${cls}">${inner}</div>`;
+
+function renderNew() {
+  const mods = S.sys ? Object.entries(S.sys.models).map(([k, m]) => `<div class="flex items-center justify-between gap-2 text-[11px] py-1 border-b border-white/5">
+    <span class="${m.installed ? 'text-zinc-300' : 'text-zinc-500'}">${m.installed ? '✓' : '·'} ${esc(m.title)}</span>
+    ${m.installed ? `<span class="text-zinc-600">${m.size_mb ? m.size_mb + ' MB' : ''}</span>` : `<button onclick="downloadModel('${k}')" class="text-pink-400 hover:text-pink-300">скачать ${m.size_mb || ''} MB</button>`}</div>`).join('') : '';
+  $('viewBody').innerHTML = `<div class="space-y-4 fade-in">
+    ${card(`<div class="grid md:grid-cols-4 gap-3 text-xs">
+      ${[['1', 'Вокал', 'Mel-Band RoFormer отделяет голос от музыки, Karaoke убирает бэки', 'orange'],
+         ['2', 'Без эффектов', 'De-Echo и De-Reverb снимают дилей и ревер — остаётся «сухой» голос', 'pink'],
+         ['3', 'Датасет', 'чистые куски голоса + озвучка текста этим голосом + копии по высоте', 'purple'],
+         ['4', 'Обучение', 'ZIP или папка для Applio / RVC WebUI и число эпох под ваш объём', 'amber']]
+        .map(([n, t, d, c]) => `<div class="p-3 rounded-xl bg-${c}-500/5 border border-${c}-500/15"><div class="text-${c}-400 font-bold text-lg">${n}</div><div class="font-semibold">${t}</div><div class="text-zinc-500 text-[11px] mt-1">${d}</div></div>`).join('')}
+    </div>`)}
+    ${card(`<div class="text-sm font-semibold mb-2">С чего начать</div>
+      <ol class="text-xs text-zinc-400 space-y-1 list-decimal pl-4">
+        <li>Перетащите песню слева (WAV / MP3). Лучше всего — трек, где голос звучит долго и разнообразно.</li>
+        <li>Оставьте настройки по умолчанию и нажмите «Подготовить датасет». На видеокарте это ~5–15 минут (озвучка — самая долгая часть).</li>
+        <li>Послушайте результат во вкладках, уберите неудачные куски, поправьте ударения кликом по слову.</li>
+        <li>На вкладке «Датасет и обучение» скачайте ZIP и посмотрите, сколько эпох ставить в RVC.</li>
+      </ol>
+      <div class="text-[11px] text-zinc-500 mt-3">Одна песня даёт 1–3 минуты чистого голоса — для RVC этого мало. Поэтому есть вариант 2: голос певца клонируется и читает текст (по умолчанию первая глава «Гарри Поттера»), так набираются десятки минут речи того же тембра.</div>`)}
+    ${card(`<div class="text-sm font-semibold mb-2">Нейросети</div>${mods}`)}
+  </div>`;
+}
+async function downloadModel(k) { try { await post(`/api/models/${k}/download`); toast('Загрузка началась'); setTimeout(loadSystem, 1500); } catch (e) { toast(e.message); } }
+
+function renderVocal() {
+  const m = S.man;
+  if (!m) return $('viewBody').innerHTML = empty('Перетащите трек слева');
+  const v = m.vocal || {};
+  if (!v.separate) return $('viewBody').innerHTML = empty('Вокал ещё не отделён — нажмите «Подготовить датасет»');
+  const rows = [['vocal/mix.mp3', 'Исходный трек', 'как есть', '#a1a1aa'],
+    ['vocal/vocals.mp3', 'Весь вокал', v.separate.model, '#ec4899'],
+    ['vocal/instrumental.mp3', 'Музыка без голоса', 'для проверки разделения', '#71717a']];
+  if (v.lead) rows.push(['vocal/lead.mp3', 'Основной голос', 'без бэков', '#f472b6'], ['vocal/backing.mp3', 'Бэк-вокал', `тише голоса на ${-v.lead.backing_db} дБ`, '#a78bfa']);
+  if (v.dry && v.dry.chain && v.dry.chain.length) rows.push(['vocal/removed_fx.mp3', 'Что убрано', 'эхо, дилей, ревер', '#f59e0b']);
+  if (v.dry) rows.push(['vocal/dry.mp3', 'Сухой голос — итог', 'отсюда режется датасет', '#10b981']);
+  $('viewBody').innerHTML = `<div class="space-y-2 fade-in">${rows.map(([f, t, d, c], i) => `
+    <div class="bg-suno-card rounded-xl border border-white/5 p-3 flex items-center gap-3">
+      ${playBtn(`playRel('${f}', '${esc(t)}')`)}
+      <div class="w-44 flex-shrink-0"><div class="text-sm font-semibold">${esc(t)}</div><div class="text-[10px] text-zinc-500 truncate">${esc(d || '')}</div></div>
+      <div class="flex-1 h-10"><canvas class="wave" id="wv${i}"></canvas></div>
+      <a href="${fileUrl(f, 1)}" class="text-zinc-500 hover:text-white text-sm" title="Скачать">⤓</a>
+    </div>`).join('')}
+    <div class="text-[11px] text-zinc-500 pt-2">Если в «сухом голосе» осталось эхо — выберите «Максимум» в «Убрать эхо и ревер». Если голос стал глухим — «Ревер» или «Нет». Пересчёт берёт уже отделённый вокал из кэша.</div></div>`;
+  rows.forEach(([f, , , c], i) => drawWave($('wv' + i), f, c));
+}
+
+function scoreBar(s) {
+  const c = s >= 75 ? '#10b981' : s >= 45 ? '#f59e0b' : '#ef4444';
+  return `<div class="w-16 h-1.5 bg-zinc-800 rounded-full overflow-hidden"><div class="h-full" style="width:${s}%;background:${c}"></div></div>`;
+}
+function slicesTable(list, kind, dir) {
+  return `<div class="space-y-1">${list.map(s => `
+    <div class="flex items-center gap-3 px-3 py-2 rounded-lg ${s.include ? 'bg-suno-card' : 'bg-suno-card/40 opacity-60'} border border-white/5">
+      ${playBtn(`playRel('${dir}/${s.file}', '${s.file}', '${kind === 'clean' ? 'чистый голос' : 'озвучка'}')`)}
+      <span class="font-mono text-[11px] w-28 truncate">${s.file}</span>
+      <span class="text-[11px] text-zinc-400 w-12 text-right">${s.dur.toFixed(1)} с</span>
+      ${scoreBar(s.score)}<span class="text-[10px] text-zinc-500 w-8">${s.score}</span>
+      <span class="text-[10px] text-zinc-500 w-24 truncate" title="доля звучащего голоса">голос ${Math.round((s.voiced || 0) * 100)}%</span>
+      <span class="flex-1 text-[10px] text-amber-400 truncate">${(s.flags || []).join(', ')}</span>
+      ${kind === 'clean' && s.src_start != null ? `<span class="text-[10px] text-zinc-600 font-mono">${fmtT(s.src_start)}</span>` : ''}
+      <label class="flex items-center gap-1 text-[10px] text-zinc-400 cursor-pointer"><input type="checkbox" ${s.include ? 'checked' : ''} onchange="toggleSlice('${kind}', '${s.file}', this.checked)" class="accent-pink-500">в датасет</label>
+    </div>`).join('')}</div>`;
+}
+async function toggleSlice(kind, file, inc) {
+  try {
+    const r = await post(`/api/projects/${S.pid}/slice`, { kind, file, include: inc });
+    const lst = kind === 'clean' ? S.man.clean.slices : S.man.tts.dataset.slices;
+    lst.forEach(s => { if (s.file === file) s.include = inc; });
+    S.man.summary = r.summary; updatePanel(); render();
+  } catch (e) { toast(e.message); }
+}
+function renderClean() {
+  const m = S.man;
+  if (!m) return $('viewBody').innerHTML = empty('Перетащите трек слева');
+  if (!m.clean) return $('viewBody').innerHTML = empty('Чистый голос ещё не нарезан');
+  const st = m.clean.stats;
+  const stat = (t, v, c = 'text-white') => `<div class="bg-suno-card rounded-xl border border-white/5 p-3"><div class="text-[10px] text-zinc-500 uppercase">${t}</div><div class="text-lg font-bold ${c}">${v}</div></div>`;
+  $('viewBody').innerHTML = `<div class="space-y-4 fade-in">
+    <div class="grid grid-cols-5 gap-2">${stat('трек', fmtT(st.source_s))}${stat('голос звучит', fmtT(st.voice_s))}${stat('кусков', st.slices)}${stat('в датасете', st.included + ' шт', 'text-emerald-400')}${stat('длительность', fmtMin(m.summary.clean_s), 'text-emerald-400')}</div>
+    <div class="text-[11px] text-zinc-500">Оценка 0–100: доля звучащего голоса, шум, перегруз, длина. Куски ниже 45 не берутся автоматически. Послушайте и уберите галочку, если слышны остатки музыки или чужие голоса. Частота: ${st.target_sr / 1000} кГц, моно.</div>
+    ${slicesTable(m.clean.slices, 'clean', 'dataset/clean')}</div>`;
+}
+
+// ---- TTS
+function stressedHtml(b, take) {
+  const words = b.words || [];
+  const bad = new Set(((take && take.suspicious) || []).map(x => x.w.toLowerCase()));
+  const miss = new Set(((take && take.misread) || []).map(x => x.w.toLowerCase()));
+  let wi = 0, k = 0;
+  return esc(b.stressed).replace(/[А-Яа-яЁё+]+/g, tok => {
+    const clean = tok.replace(/\+/g, '');
+    const nv = [...clean].filter(c => VOW.includes(c)).length;
+    let info = null;
+    if (nv >= 2) info = words[wi++];
+    const html = tok.replace(/\+([аеёиоуыэюяАЕЁИОУЫЭЮЯ])/g, '<span class="stv">$1</span>');
+    if (!info) return html;
+    const cls = ['w', info.homograph ? 'hom' : '', info.idx == null ? 'nost' : '', info.src === 'manual' || info.src === 'dict' ? 'man' : '',
+                 bad.has(clean.toLowerCase()) ? 'bad' : '', miss.has(clean.toLowerCase()) ? 'miss' : ''].join(' ');
+    const idx = k++;
+    return `<span class="${cls}" onclick="stressPick(event, ${b.i}, ${idx})">${html}</span>`;
+  });
+}
+function renderTts() {
+  const m = S.man;
+  if (!m) return $('viewBody').innerHTML = empty('Перетащите трек слева');
+  const t = m.tts;
+  if (!t || !t.blocks) return $('viewBody').innerHTML = empty('Озвучки ещё нет — включите вариант 2 и нажмите «Подготовить датасет»');
+  const bl = t.blocks;
+  const ok = bl.filter(b => b.status === 'ok').length, bad = bl.filter(b => b.status === 'check').length, todo = bl.filter(b => !b.takes.length).length;
+  const f = S.tts.filter;
+  const shown = bl.filter(b => f === 'all' || (f === 'bad' && b.status === 'check') || (f === 'ok' && b.status === 'ok'));
+  const running = m.job && (m.job.status === 'running' || m.job.status === 'queued');
+  $('viewBody').innerHTML = `<div class="space-y-3 fade-in">
+    <div class="bg-suno-card rounded-xl border border-white/5 p-3 flex items-center gap-3">
+      ${playBtn(`playRel('tts/ref.wav', 'Образец голоса', '${t.ref.file}')`, 'Образец голоса')}
+      <div class="flex-1 min-w-0"><div class="text-xs font-semibold">Образец голоса: ${esc(t.ref.file)} · ${t.ref.dur} с</div>
+        <div class="text-[10px] text-zinc-500 truncate">${t.clone === 'icl' ? 'клонирование по образцу и тексту: «' + esc(t.ref.text || '') + '»' : 'клонирование по тембру (без текста образца)'} · текст: ${esc(t.text_name || '')}</div></div>
+      <div class="text-right text-[11px]"><div><span class="text-emerald-400 font-bold">${ok}</span> прошли · <span class="text-red-400 font-bold">${bad}</span> не прошли${todo ? ` · <span class="text-zinc-400">${todo}</span> в очереди` : ''}</div>
+        <div class="text-zinc-500">в датасете ${fmtMin(m.summary.tts_s || 0)}</div></div>
+    </div>
+    <div class="flex items-center justify-between gap-2">
+      <div class="flex gap-1">${[['all', 'Все'], ['bad', 'Не прошли'], ['ok', 'Прошли']].map(([v, n]) => `<button onclick="S.tts.filter='${v}';renderTts()" class="seg-btn ${f === v ? 'active' : ''} text-[11px] px-3 py-1 rounded-lg border border-white/10 text-zinc-400">${n}</button>`).join('')}</div>
+      <div class="flex gap-2 text-[10px] text-zinc-500 items-center">
+        <span><span class="stv">а</span> ударение</span><span class="border-b border-dashed border-amber-500">омограф</span><span class="text-zinc-400">без метки</span><span class="text-sky-300">ручное</span><span class="bg-red-500/25 px-1 rounded">ударение не то</span><span class="bg-amber-500/20 px-1 rounded">слово не прочитано</span>
+        ${bad ? `<button ${running ? 'disabled' : ''} onclick="redoBlocks(${JSON.stringify(bl.filter(b => b.status === 'check').map(b => b.i))})" class="ml-2 text-[11px] font-semibold bg-pink-600/80 hover:bg-pink-600 text-white px-3 py-1 rounded-lg disabled:opacity-40">Переозвучить все непрошедшие</button>` : ''}
+      </div>
+    </div>
+    <div class="text-[11px] text-zinc-500">Клик по слову — выбрать ударение. Проверка блока: распознавание речи (Whisper) сверяет слова с текстом, meter2 слушает, какой слог реально ударный, плюс похожесть голоса на образец. Не прошедшие проверку блоки в датасет не попадают, пока вы не примете их на слух.</div>
+    <div class="space-y-1.5">${shown.map(b => ttsBlock(b, running)).join('')}</div></div>`;
+}
+function ttsBlock(b, running) {
+  const take = b.chosen != null ? b.takes[b.chosen] : null;
+  const badge = !take ? '<span class="text-[10px] text-zinc-500">в очереди</span>' :
+    b.status === 'ok' ? '<span class="text-[10px] text-emerald-400 font-bold">✓ прошёл</span>' :
+    b.accepted ? '<span class="text-[10px] text-sky-400 font-bold">✓ принят на слух</span>' : '<span class="text-[10px] text-red-400 font-bold">✗ проверьте</span>';
+  const why = take ? [...(take.issues || []), take.passed_words ? '' : `слова не совпали: WER ${Math.round(take.wer * 100)}%`,
+    ...(take.suspicious || []).map(s => `«${s.w}»: ударение на ${s.detected + 1}-м слоге вместо ${s.expected + 1}-го`),
+    ...(take.misread || []).map(s => `«${s.w}» не прочитано`)].filter(Boolean) : [];
+  const inc = b.include !== false;
+  return `<div class="bg-suno-card rounded-xl border ${b.status === 'check' && !b.accepted ? 'border-red-500/20' : 'border-white/5'} p-3 ${inc ? '' : 'opacity-50'}">
+    <div class="flex items-start gap-3">
+      <div class="text-[10px] text-zinc-600 font-mono w-8 pt-1">${b.i + 1}</div>
+      ${take ? playBtn(`playRel('tts/takes/${take.file}', 'Блок ${b.i + 1}', 'дубль ${b.chosen + 1}')`) : '<div class="w-7"></div>'}
+      <div class="flex-1 min-w-0">
+        <div class="text-[13px] leading-relaxed select-text">${stressedHtml(b, take)}</div>
+        ${take ? `<div class="text-[10px] text-zinc-500 mt-1">слышно: «${esc(take.heard)}»</div>` : ''}
+        ${why.length ? `<div class="text-[10px] text-amber-400 mt-0.5">${esc(why.join(' · '))}</div>` : ''}
+      </div>
+      <div class="flex flex-col items-end gap-1 flex-shrink-0 w-44">
+        ${badge}
+        ${take ? `<div class="text-[10px] text-zinc-500">WER ${Math.round(take.wer * 100)}% · голос ${(take.sim ?? 0).toFixed(2)} · ${take.dur} с</div>
+          <div class="text-[10px] text-zinc-500">ударений проверено: ${take.stress_checked}</div>` : ''}
+        ${b.takes.length > 1 ? `<div class="flex gap-1 flex-wrap justify-end">${b.takes.map((t, k) => `<button onclick="chooseTake(${b.i}, ${k})" title="WER ${Math.round(t.wer * 100)}%${t.ok ? ', прошёл' : ''}" class="text-[10px] px-1.5 py-0.5 rounded border ${k === b.chosen ? 'border-pink-500/50 text-white bg-white/10' : 'border-white/10 text-zinc-400'}">${t.ok ? '✓' : ''}${k + 1}</button>`).join('')}</div>` : ''}
+        <div class="flex gap-2 text-[10px]">
+          <button ${running ? 'disabled' : ''} onclick="redoBlocks([${b.i}])" class="text-pink-400 hover:text-pink-300 disabled:opacity-40">переозвучить</button>
+          ${b.status === 'check' ? `<button ${running ? 'disabled' : ''} onclick="blockSet(${b.i}, {accepted: ${!b.accepted}})" class="text-sky-400 hover:text-sky-300 disabled:opacity-40">${b.accepted ? 'отменить приём' : 'принять'}</button>` : ''}
+          <button ${running ? 'disabled' : ''} onclick="blockSet(${b.i}, {include: ${!inc}})" class="text-zinc-400 hover:text-white disabled:opacity-40">${inc ? 'исключить' : 'вернуть'}</button>
+        </div>
+      </div>
+    </div></div>`;
+}
+async function blockSet(i, body) {
+  try { await post(`/api/projects/${S.pid}/block`, { i, ...body }); startPolling(); setTimeout(() => reloadProject(false), 300); }
+  catch (e) { toast(e.message); }
+}
+async function chooseTake(i, k) { await blockSet(i, { chosen: k }); }
+async function redoBlocks(list) {
+  if (!list.length) return;
+  try { await post(`/api/projects/${S.pid}/redo`, { blocks: list, options: { tts: gatherOptions().tts } }); toast(`Переозвучка: ${list.length} бл.`); startPolling(); }
+  catch (e) { toast(e.message); }
+}
+// stress picker
+function stressPick(ev, bi, wk) {
+  ev.stopPropagation();
+  const b = S.man.tts.blocks[bi];
+  const info = (b.words || [])[wk]; if (!info) return;
+  const w = info.w, vows = [...w].map((c, i) => VOW.includes(c) ? i : -1).filter(i => i >= 0);
+  const pop = $('stressPop');
+  const variants = vows.map((pos, vi) => `<button onclick="applyStress(${bi}, ${wk}, ${vi}, false)" class="px-2 py-1 rounded-lg border ${info.idx === vi ? 'border-pink-500/60 bg-white/10' : 'border-white/10'} hover:bg-white/10 text-sm">${esc(w.slice(0, pos))}<span class="stv">${esc(w[pos])}</span>${esc(w.slice(pos + 1))}</button>`).join('');
+  pop.innerHTML = `<div class="font-semibold">Ударение в слове «${esc(w)}»</div>
+    <div class="text-[10px] text-zinc-500">${info.homograph ? 'омограф: смысл зависит от ударения · ' : ''}${{auto: 'поставил RUAccent', dict: 'из вашего словаря', manual: 'ручная метка', none: 'метки нет — модель решит сама'}[info.src] || ''}</div>
+    <div class="flex flex-wrap gap-1">${variants}</div>
+    <label class="flex items-center gap-2 text-[11px] text-zinc-400"><input id="stressAll" type="checkbox" checked class="accent-pink-500">во всём тексте (в словарь ударений)</label>
+    <div class="text-[10px] text-zinc-500">После выбора блок${' '}озвучится заново.</div>`;
+  const r = ev.target.getBoundingClientRect();
+  pop.style.left = Math.min(window.innerWidth - 300, r.left) + 'px'; pop.style.top = (r.bottom + 6) + 'px';
+  pop.classList.remove('hidden');
+}
+document.addEventListener('click', e => { if (!$('stressPop').contains(e.target)) $('stressPop').classList.add('hidden'); });
+function setStress(word, vi) {
+  let k = 0, out = '';
+  for (const c of word.replace(/\+/g, '')) { if (VOW.includes(c)) { if (k === vi) out += '+'; k++; } out += c; }
+  return out;
+}
+async function applyStress(bi, wk, vi, _) {
+  const all = $('stressAll').checked;
+  $('stressPop').classList.add('hidden');
+  const b = S.man.tts.blocks[bi], info = b.words[wk];
+  const marked = setStress(info.w, vi);
+  try {
+    let blocks = [bi];
+    if (all) {
+      await post(`/api/projects/${S.pid}/dict`, { set: { [info.w.toLowerCase()]: marked.toLowerCase() } });
+      blocks = S.man.tts.blocks.filter(x => (x.words || []).some(y => y.w.toLowerCase() === info.w.toLowerCase())).map(x => x.i);
+    } else {
+      // only this occurrence: the block text with every current mark kept as manual
+      let k = 0;
+      const edited = b.stressed.replace(/[А-Яа-яЁё+]+/g, tok => {
+        const clean = tok.replace(/\+/g, '');
+        if ([...clean].filter(c => VOW.includes(c)).length < 2) return tok;
+        return (k++ === wk) ? setStress(clean, vi) : tok;
+      });
+      await post(`/api/projects/${S.pid}/block`, { i: bi, edited });
+    }
+    await redoBlocks(blocks);
+  } catch (e) { toast(e.message); }
+}
+
+function renderAug() {
+  const m = S.man;
+  if (!m) return $('viewBody').innerHTML = empty('Перетащите трек слева');
+  if (!m.aug) return $('viewBody').innerHTML = empty('Копий нет — включите вариант 3 и нажмите «Пересчитать»');
+  const files = m.aug.files;
+  const by = {};
+  files.forEach(f => (by[f.src] = by[f.src] || []).push(f));
+  $('viewBody').innerHTML = `<div class="space-y-3 fade-in">
+    <div class="text-[11px] text-zinc-500">${files.length} копий, ${fmtMin(m.aug.dataset_s)} · сдвиги: ${m.aug.semis.map(s => (s > 0 ? '+' : '') + s).join(', ')} полутонов. Вокодер WORLD меняет только высоту, форманты (тембр) остаются. Держите копии не больше половины датасета.</div>
+    ${Object.entries(by).map(([src, fs]) => `<div class="bg-suno-card rounded-xl border border-white/5 p-3 flex items-center gap-3">
+      ${playBtn(`playRel('dataset/clean/${src}', '${src}', 'оригинал')`, 'Оригинал')}<span class="font-mono text-[11px] w-28">${src}</span>
+      <div class="flex gap-2 flex-wrap">${fs.map(f => `<button onclick="playRel('dataset/aug/${f.file}', '${f.file}', 'копия')" class="text-[11px] px-2 py-1 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10">▶ ${f.semis > 0 ? '+' : ''}${f.semis}</button>`).join('')}</div></div>`).join('')}
+  </div>`;
+}
+
+function renderDataset() {
+  const m = S.man;
+  if (!m) return $('viewBody').innerHTML = empty('Перетащите трек слева');
+  const s = m.summary || {}, t = m.training;
+  if (!s.total_s) return $('viewBody').innerHTML = empty('Датасет ещё не собран');
+  const part = (k, title, sec, c) => `<label class="flex items-center justify-between gap-3 p-3 rounded-xl bg-${c}-500/5 border border-${c}-500/15 cursor-pointer">
+      <span class="flex items-center gap-2"><input type="checkbox" id="ex_${k}" ${sec ? 'checked' : 'disabled'} onchange="updateTraining()" class="accent-pink-500 w-4 h-4"><span class="text-xs font-semibold">${title}</span></span>
+      <span class="text-sm font-bold text-${c}-300">${fmtMin(sec || 0)}</span></label>`;
+  const sr = (m.clean && m.clean.stats.target_sr) || 40000;
+  $('viewBody').innerHTML = `<div class="space-y-4 fade-in">
+    <div class="grid md:grid-cols-2 gap-4">
+      ${card(`<div class="text-[11px] font-bold text-zinc-400 uppercase mb-3">Состав датасета</div>
+        <div class="space-y-2">${part('clean', '1 · Чистый голос из трека', s.clean_s, 'emerald')}${part('tts', '2 · Озвучка текста', s.tts_s, 'purple')}${part('aug', '3 · Копии по высоте', s.aug_s, 'blue')}</div>
+        <div class="flex justify-between mt-3 pt-3 border-t border-white/5"><span class="text-xs text-zinc-400">Всего</span><span class="text-lg font-bold">${fmtMin(s.total_s)} · ${s.files} файлов</span></div>
+        <div class="text-[10px] text-zinc-500 mt-1">моно WAV 16 бит, ${sr / 1000} кГц, куски 2–10 с, паузы и шумы убраны, громкость выровнена</div>`)}
+      <div id="trainCard">${t ? trainHtml(t, sr) : ''}</div>
+    </div>
+    ${card(`<div class="text-[11px] font-bold text-zinc-400 uppercase mb-3">Экспорт</div>
+      <div class="flex flex-wrap items-center gap-3">
+        <button onclick="exportZip()" class="h-10 px-5 rounded-xl font-bold text-sm bg-gradient-to-r from-orange-500 to-pink-600 hover:brightness-110">⤓ Скачать ZIP</button>
+        <button onclick="exportFolder()" class="h-10 px-4 rounded-xl text-xs bg-white/5 hover:bg-white/10 border border-white/10">Собрать папку и открыть</button>
+        <label class="flex items-center gap-2 text-[11px] text-zinc-400"><input id="ex_onewav" type="checkbox" class="accent-pink-500">+ всё одним WAV-файлом</label>
+      </div>
+      <div id="folderPath" class="text-[11px] text-zinc-400 font-mono mt-2 select-text"></div>
+      <div class="text-[11px] text-zinc-500 mt-3 space-y-1">
+        <div><b class="text-zinc-300">Applio:</b> Train → Dataset Path = папка <span class="font-mono">dataset</span> → Sample Rate ${sr / 1000}k → Preprocess → Extract (rmvpe) → Train: Total Epoch <b class="ep-now">${t ? t.epochs : '—'}</b>, Batch Size <b>${t ? t.batch : '—'}</b>, Save Every Epoch <b class="save-now">${t ? t.save_every : '—'}</b> → Train Index.</div>
+        <div><b class="text-zinc-300">RVC WebUI:</b> Train → путь к папке, target sample rate ${sr / 1000}k, pitch guidance: да, те же эпохи и batch.</div>
+        <div>Файлы уже нарезаны и очищены — дополнительная обработка не нужна. В ZIP есть README с этими цифрами.</div>
+      </div>`)}
+  </div>`;
+}
+const EPOCH_TABLE = [[3, [400, 300, 500]], [6, [300, 250, 400]], [12, [250, 200, 300]], [25, [200, 150, 250]], [45, [150, 100, 200]], [1e9, [100, 60, 150]]];
+function recommendJS(s, batch) {      // same as pipeline.recommend_training
+  const total = s.clean_s + s.tts_s + s.aug_s;
+  if (total <= 0) return null;
+  const eff = (s.clean_s + s.tts_s + 0.3 * s.aug_s) / 60;
+  const [rec, lo, hi] = EPOCH_TABLE.find(([lim]) => eff < lim)[1];
+  const segments = Math.max(1, Math.floor(total / 3.5)), spe = Math.ceil(segments / batch);
+  const notes = [];
+  if (eff < 5) notes.push('данных мало (< 5 мин): модель может быть нестабильной; добавьте озвучку или другие треки');
+  if (s.aug_s > s.clean_s + s.tts_s) notes.push('копий со сдвигом высоты больше, чем настоящего голоса: лучше уменьшить их число');
+  notes.push('следите за графиком потерь (TensorBoard) или включите Overtraining Detector в Applio: если качество перестаёт расти, берите более раннюю сохранённую эпоху');
+  return { epochs: rec, epochs_low: lo, epochs_high: hi, batch, effective_min: Math.round(eff * 10) / 10, segments,
+           steps_per_epoch: spe, total_steps: spe * rec, save_every: Math.max(10, Math.floor(rec / 10)), notes };
+}
+function trainHtml(t, sr) {
+  return card(`<div class="text-[11px] font-bold text-zinc-400 uppercase mb-2">Обучение RVC — рекомендация для выбранного состава</div>
+    <div class="flex items-end gap-3"><div class="text-5xl font-bold bg-gradient-to-r from-orange-400 to-pink-500 bg-clip-text text-transparent">${t.epochs}</div>
+      <div class="pb-1.5"><div class="text-sm font-semibold">эпох</div><div class="text-[11px] text-zinc-500">разумный диапазон ${t.epochs_low}–${t.epochs_high}</div></div></div>
+    <div class="grid grid-cols-2 gap-2 mt-3 text-[11px]">
+      <div class="p-2 rounded-lg bg-black/30"><div class="text-zinc-500">Batch size</div><div class="font-bold text-sm">${t.batch}</div></div>
+      <div class="p-2 rounded-lg bg-black/30"><div class="text-zinc-500">Sample rate</div><div class="font-bold text-sm">${sr / 1000}k</div></div>
+      <div class="p-2 rounded-lg bg-black/30"><div class="text-zinc-500">Шагов на эпоху / всего</div><div class="font-bold text-sm">~${t.steps_per_epoch} / ~${t.total_steps}</div></div>
+      <div class="p-2 rounded-lg bg-black/30"><div class="text-zinc-500">Сохранять каждые</div><div class="font-bold text-sm">${t.save_every} эпох</div></div>
+    </div>
+    <div class="text-[10px] text-zinc-500 mt-2">Расчёт по «эффективной» длине ${t.effective_min} мин (копии по высоте считаются на 30%: они почти повторяют исходный голос). Batch — под вашу видеокарту; f0-метод: rmvpe.</div>
+    ${t.notes.map(n => `<div class="text-[10px] text-amber-400 mt-1">• ${esc(n)}</div>`).join('')}`, 'border-pink-500/20');
+}
+function updateTraining() {
+  const m = S.man, s = m.summary, sr = (m.clean && m.clean.stats.target_sr) || 40000;
+  const sel = { clean_s: $('ex_clean').checked ? s.clean_s : 0, tts_s: $('ex_tts').checked ? s.tts_s : 0, aug_s: $('ex_aug').checked ? s.aug_s : 0 };
+  const t = recommendJS(sel, (m.training && m.training.batch) || 8);
+  $('trainCard').innerHTML = t ? trainHtml(t, sr) : '';
+  S.trainNow = t;
+  document.querySelectorAll('.ep-now').forEach(e => e.textContent = t ? t.epochs : '—');
+  document.querySelectorAll('.save-now').forEach(e => e.textContent = t ? t.save_every : '—');
+}
+function exportParts() { return ['clean', 'tts', 'aug'].filter(k => $('ex_' + k) && $('ex_' + k).checked); }
+function exportZip() {
+  const p = exportParts(); if (!p.length) return toast('Выберите, что экспортировать');
+  location.href = `/api/export/${S.pid}?parts=${p.join(',')}${$('ex_onewav').checked ? '&onewav=1' : ''}`;
+}
+async function exportFolder() {
+  const p = exportParts(); if (!p.length) return toast('Выберите, что экспортировать');
+  try { const r = await post(`/api/projects/${S.pid}/folder`, { parts: p }); $('folderPath').textContent = 'Папка датасета: ' + r.path; }
+  catch (e) { toast(e.message); }
+}
+
+async function renderProjects() {
+  let list = [];
+  try { list = await api('/api/projects'); } catch (e) {}
+  if (!list.length) return $('viewBody').innerHTML = empty('Проектов пока нет');
+  $('viewBody').innerHTML = `<div class="space-y-1.5 fade-in">${list.map(p => `
+    <div class="bg-suno-card rounded-xl border ${p.id === S.pid ? 'border-pink-500/30' : 'border-white/5'} p-3 flex items-center gap-3">
+      <div class="w-9 h-9 rounded-lg bg-gradient-to-br from-orange-500 to-pink-600 flex items-center justify-center flex-shrink-0">♪</div>
+      <div class="flex-1 min-w-0 cursor-pointer" onclick="openProject('${p.id}', 'dataset')">
+        <div class="text-sm font-semibold truncate">${esc(p.name)}</div>
+        <div class="text-[10px] text-zinc-500">${esc(p.created)} · ${p.duration ? fmtT(p.duration) : ''} · ${p.status}${p.summary && p.summary.total_s ? ' · датасет ' + fmtMin(p.summary.total_s) : ''}</div>
+      </div>
+      <button onclick="openProject('${p.id}', 'dataset')" class="text-[11px] px-3 py-1 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10">Открыть</button>
+      ${S.sys && !S.sys.colab ? `<button onclick="openFolder('${p.id}')" class="text-[11px] px-2 py-1 rounded-lg text-zinc-400 hover:text-white">папка</button>` : ''}
+      <button onclick="delProject('${p.id}')" class="text-[11px] px-2 py-1 rounded-lg text-zinc-500 hover:text-red-400">удалить</button>
+    </div>`).join('')}</div>`;
+}
+async function openFolder(pid) { try { await post(`/api/projects/${pid}/open`); } catch (e) { toast(e.message); } }
+async function delProject(pid) {
+  if (!confirm('Удалить проект со всеми файлами?')) return;
+  try { await post(`/api/projects/${pid}/delete`); if (pid === S.pid) { S.pid = null; S.man = null; updatePanel(); } renderProjects(); }
+  catch (e) { toast(e.message); }
+}
+
+// ============================================================ text editor
+async function openTextEditor() {
+  if (!S.pid) return toast('Сначала выберите трек');
+  const t = await api('/api/text/' + S.pid);
+  $('textArea').value = t.text; $('textPreview').classList.add('hidden');
+  $('textModal').classList.remove('hidden');
+}
+function loadTxt(inp) {
+  const f = inp.files[0]; if (!f) return;
+  const r = new FileReader(); r.onload = () => { $('textArea').value = r.result; }; r.readAsText(f, 'utf-8');
+}
+async function saveText() {
+  try { await post(`/api/projects/${S.pid}/text`, { text: $('textArea').value }); closeModal('textModal'); loadTextName(); toast('Текст сохранён — нажмите «Пересчитать», озвучатся только новые блоки'); }
+  catch (e) { toast(e.message); }
+}
+async function resetText() {
+  try { await post(`/api/projects/${S.pid}/text`, { text: '' }); const t = await api('/api/text/' + S.pid); $('textArea').value = t.text; loadTextName(); }
+  catch (e) { toast(e.message); }
+}
+async function previewStress() {
+  const box = $('textPreview'); box.classList.remove('hidden'); box.textContent = 'RUAccent расставляет ударения…';
+  try {
+    const r = await post('/api/accent', { text: $('textArea').value.slice(0, 1500), dict: (S.man && S.man.user_dict) || {} });
+    box.innerHTML = esc(r.stressed).replace(/\+([аеёиоуыэюяАЕЁИОУЫЭЮЯ])/g, '<span class="stv">$1</span>').replace(/\n/g, '<br>');
+  } catch (e) { box.textContent = e.message; }
+}
+
+// ============================================================ boot
+const BOOT_HASH = decodeURIComponent(location.hash.slice(1));
+loadSystem();
+setView('new');
+(async () => {
+  let pid = null, view = null;
+  const h = BOOT_HASH;
+  if (h) { const k = h.lastIndexOf('/'); if (k > 0) { pid = h.slice(0, k); view = h.slice(k + 1); } else if (VIEWS[h]) view = h; }
+  if (!pid) { try { pid = localStorage.getItem('rvc_pid'); } catch (e) {} }
+  if (pid) { try { await openProject(pid, VIEWS[view] ? view : null); } catch (e) {} }
+  else if (VIEWS[view]) setView(view);
+})();
+</script>
+</body>
+</html>
